@@ -12,7 +12,14 @@ class GameEngine:
 
         self.score = 0
         self.lives = 3
+
+        # Dynamic difficulty
         self.spawn_delay = 750
+        self.min_spawn_delay = 300
+
+        self.speed_multiplier = 1.0
+        self.max_speed_multiplier = 2.0
+
         self.last_spawn_time = pygame.time.get_ticks()
         self.game_state = "PLAYING"
 
@@ -37,16 +44,32 @@ class GameEngine:
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.basket.move_right()
 
+        # Dynamic difficulty based on score
+        self.spawn_delay = max(
+            self.min_spawn_delay,
+            750 - (self.score * 30)
+        )
+
+        self.speed_multiplier = min(
+            self.max_speed_multiplier,
+            1.0 + (self.score * 0.05)
+        )
+
         # Spawn fruits
         now = pygame.time.get_ticks()
 
         if now - self.last_spawn_time >= self.spawn_delay:
-            self.fruits.append(Fruit(self.width))
+            self.fruits.append(
+                Fruit(
+                    self.width,
+                    self.speed_multiplier
+                )
+            )
             self.last_spawn_time = now
 
         basket_rect = self.basket.rect
 
-        # Update all fruits
+        # Update fruits
         for fruit in self.fruits[:]:
             fruit.update()
 
@@ -67,7 +90,7 @@ class GameEngine:
                 self.fruits.remove(fruit)
                 continue
 
-            # Normal or rotten fruit missed
+            # Fruit missed
             if fruit.is_missed(self.height):
                 self.lives -= 1
                 self.fruits.remove(fruit)
@@ -78,8 +101,13 @@ class GameEngine:
     def reset(self):
         self.basket = Basket(self.width, self.height)
         self.fruits.clear()
+
         self.score = 0
         self.lives = 3
+
+        self.spawn_delay = 750
+        self.speed_multiplier = 1.0
+
         self.last_spawn_time = pygame.time.get_ticks()
         self.game_state = "PLAYING"
 
@@ -88,6 +116,7 @@ class GameEngine:
 
         # Ground
         ground_y = self.height - 25
+
         pygame.draw.rect(
             screen,
             (45, 50, 60),
@@ -125,7 +154,7 @@ class GameEngine:
             )
         )
 
-        # Game Over screen
+        # Game Over
         if self.game_state == "GAME_OVER":
 
             overlay = pygame.Surface(

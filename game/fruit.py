@@ -3,7 +3,7 @@ import pygame
 
 
 class Fruit:
-    def __init__(self, screen_width):
+    def __init__(self, screen_width, speed_multiplier=1.0):
         self.screen_width = screen_width
 
         # 20% chance of being a rotten fruit / hazard
@@ -12,17 +12,18 @@ class Fruit:
         self.radius = 14
         self.x = random.randint(30, screen_width - 30)
         self.y = -self.radius * 2
-        self.speed = random.uniform(4.0, 6.5)
+
+        # Fruit becomes faster as difficulty increases
+        base_speed = random.uniform(4.0, 6.5)
+        self.speed = base_speed * speed_multiplier
 
         if self.is_rotten:
-            # Rotten fruit / hazard
             self.color = (60, 180, 60)
         else:
-            # Normal fruits
             self.color = random.choice([
-                (230, 45, 45),   # Apple
-                (245, 140, 30),  # Orange
-                (160, 60, 200),  # Grape
+                (230, 45, 45),
+                (245, 140, 30),
+                (160, 60, 200),
             ])
 
     def update(self):
@@ -51,7 +52,6 @@ class Fruit:
         )
 
         if self.is_rotten:
-            # X mark to make the hazard clearly different
             pygame.draw.line(
                 surface,
                 (20, 20, 20),
@@ -59,6 +59,7 @@ class Fruit:
                 (int(self.x + 7), int(self.y + 7)),
                 3
             )
+
             pygame.draw.line(
                 surface,
                 (20, 20, 20),
@@ -67,7 +68,6 @@ class Fruit:
                 3
             )
         else:
-            # Highlight for normal fruit
             pygame.draw.circle(
                 surface,
                 (255, 255, 255),
