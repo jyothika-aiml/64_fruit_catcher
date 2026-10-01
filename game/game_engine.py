@@ -28,34 +28,50 @@ class GameEngine:
         if self.game_state != "PLAYING":
             return
 
+        # Move basket
         keys = pygame.key.get_pressed()
+
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.basket.move_left()
+
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.basket.move_right()
 
+        # Spawn fruits
         now = pygame.time.get_ticks()
+
         if now - self.last_spawn_time >= self.spawn_delay:
             self.fruits.append(Fruit(self.width))
             self.last_spawn_time = now
 
         basket_rect = self.basket.rect
 
+        # Update all fruits
         for fruit in self.fruits[:]:
             fruit.update()
 
-            # Fruit successfully caught
+            # Fruit caught by basket
             if basket_rect.colliderect(fruit.rect):
-                self.score += 1
+
+                # Rotten fruit decreases life
+                if fruit.is_rotten:
+                    self.lives -= 1
+
+                    if self.lives <= 0:
+                        self.game_state = "GAME_OVER"
+
+                # Normal fruit increases score
+                else:
+                    self.score += 1
+
                 self.fruits.remove(fruit)
                 continue
 
-            # Fruit missed
+            # Normal or rotten fruit missed
             if fruit.is_missed(self.height):
                 self.lives -= 1
                 self.fruits.remove(fruit)
 
-                # Game over when all lives are lost
                 if self.lives <= 0:
                     self.game_state = "GAME_OVER"
 
@@ -70,6 +86,7 @@ class GameEngine:
     def render(self, screen):
         screen.fill((28, 32, 40))
 
+        # Ground
         ground_y = self.height - 25
         pygame.draw.rect(
             screen,
@@ -77,33 +94,45 @@ class GameEngine:
             (0, ground_y, self.width, 25)
         )
 
+        # Basket
         self.basket.render(screen)
 
+        # Fruits
         for fruit in self.fruits:
             fruit.render(screen)
 
+        # Score
         score_surf = self.font_medium.render(
             f"Score: {self.score}",
             True,
             (255, 220, 80)
         )
+
         screen.blit(score_surf, (25, 20))
 
+        # Lives
         lives_surf = self.font_medium.render(
             f"Lives: {self.lives}",
             True,
             (240, 80, 80)
         )
+
         screen.blit(
             lives_surf,
-            (self.width - lives_surf.get_width() - 25, 20)
+            (
+                self.width - lives_surf.get_width() - 25,
+                20
+            )
         )
 
+        # Game Over screen
         if self.game_state == "GAME_OVER":
+
             overlay = pygame.Surface(
                 (self.width, self.height),
                 pygame.SRCALPHA
             )
+
             overlay.fill((0, 0, 0, 190))
             screen.blit(overlay, (0, 0))
 
@@ -112,6 +141,7 @@ class GameEngine:
                 True,
                 (235, 70, 70)
             )
+
             screen.blit(
                 over_surf,
                 (
@@ -125,6 +155,7 @@ class GameEngine:
                 True,
                 (255, 255, 255)
             )
+
             screen.blit(
                 final_surf,
                 (
@@ -138,6 +169,7 @@ class GameEngine:
                 True,
                 (200, 200, 200)
             )
+
             screen.blit(
                 restart_surf,
                 (
